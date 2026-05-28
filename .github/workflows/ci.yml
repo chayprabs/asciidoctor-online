@@ -8,6 +8,10 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -73,3 +77,26 @@ jobs:
       - name: Stop worker container
         if: always()
         run: docker rm -f asciidoctor-online-worker-ci || true
+
+  publish-worker-image:
+    if: github.event_name == 'push' && github.repository_owner == 'chayprabs'
+    needs: worker-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Publish worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/worker/Dockerfile
+          push: true
+          provenance: false
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/asciidoctor-online-worker:sha-${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/asciidoctor-online-worker:edge
