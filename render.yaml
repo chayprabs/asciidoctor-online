@@ -4,7 +4,7 @@ services:
     runtime: docker
     plan: standard
     region: oregon
-    branch: cursor/asciidoc-cloud-build
+    branch: main
     autoDeploy: true
     dockerfilePath: ./apps/worker/Dockerfile
     dockerContext: .
@@ -20,7 +20,7 @@ services:
     runtime: docker
     plan: free
     region: oregon
-    branch: cursor/asciidoc-cloud-build
+    branch: main
     autoDeploy: true
     dockerfilePath: ./apps/web/Dockerfile
     dockerContext: .

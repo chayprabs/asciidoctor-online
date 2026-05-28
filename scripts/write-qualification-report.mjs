@@ -56,6 +56,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const statusText = await readFile(STATUS_PATH, "utf8");
   const parsed = parseStatus(statusText);
+  const generatedAt = new Date().toISOString();
   let sha = "unknown";
 
   try {
@@ -75,7 +76,8 @@ async function main() {
     "Section: 19.Release Qualification Checklist",
     `Repo: ${args.repoUrl}@${sha}`,
     `Hosted: ${args.hostedUrl}`,
-    `Run at: ${parsed.runAt}`,
+    `Evidence run at: ${parsed.runAt}`,
+    `Report generated at: ${generatedAt}`,
     `Verifier: ${args.verifier}`,
     "",
     "Counts:",

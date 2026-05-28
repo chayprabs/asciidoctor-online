@@ -13,7 +13,7 @@ function parseArgs(argv) {
     branch:
       argv.find((arg) => arg.startsWith("--branch="))?.split("=")[1] ??
       process.env.GITHUB_BRANCH ??
-      "cursor/asciidoc-cloud-build",
+      "main",
     owner:
       argv.find((arg) => arg.startsWith("--owner="))?.split("=")[1] ??
       process.env.GITHUB_OWNER ??

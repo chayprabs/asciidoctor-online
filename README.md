@@ -94,4 +94,4 @@ GitHub-hosted verification automation:
 
 - Add repository variables `HOSTED_WEB_URL` and `HOSTED_API_URL`.
 - Add repository secrets `RENDER_WEB_DEPLOY_HOOK` and `RENDER_WORKER_DEPLOY_HOOK`.
-- Push to `cursor/**` or `main`, or run the `Hosted Verify` workflow manually.
+- Push to `main`, or run the `Hosted Verify` workflow manually.
