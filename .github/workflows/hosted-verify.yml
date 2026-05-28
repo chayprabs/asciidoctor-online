@@ -5,9 +5,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   deploy-and-verify:
     runs-on: ubuntu-latest
@@ -26,13 +23,13 @@ jobs:
           fi
           echo "ready=false" >> "$GITHUB_OUTPUT"
           echo "Hosted verification skipped because deploy hooks or hosted URLs are not configured."
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         if: steps.config.outputs.ready == 'true'
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         if: steps.config.outputs.ready == 'true'
         with:
           version: 10.33.1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         if: steps.config.outputs.ready == 'true'
         with:
           node-version: 22
