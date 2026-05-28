@@ -87,6 +87,7 @@ pnpm verify:hosted:dry-run
 # deploy the web and worker from render.yaml
 pnpm verify:hosted --web-url=https://<web-host> --api-url=https://<worker-host>
 pnpm verify:section19
+pnpm verify:report
 ```
 
 GitHub-hosted verification automation:
