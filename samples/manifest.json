@@ -1,0 +1,29 @@
+[
+  {
+    "id": "technical-manual",
+    "name": "Technical manual",
+    "entryPath": "index.adoc",
+    "theme": "paper-pdf",
+    "checks": ["all-formats", "plantuml", "mermaid"]
+  },
+  {
+    "id": "user-guide",
+    "name": "User guide",
+    "entryPath": "index.adoc",
+    "checks": ["all-formats", "includes"]
+  },
+  {
+    "id": "book-with-diagrams",
+    "name": "Book with diagrams",
+    "entryPath": "book.adoc",
+    "theme": "paper-pdf",
+    "checks": ["all-formats", "graphviz", "blockdiag", "ditaa"]
+  },
+  {
+    "id": "reveal-slides",
+    "name": "Reveal.js slides",
+    "entryPath": "slides.adoc",
+    "theme": "clean-html",
+    "checks": ["all-formats"]
+  }
+]

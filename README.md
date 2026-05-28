@@ -40,6 +40,13 @@ Open `http://localhost:3000`.
 - `GET /v1/tooling` reported compiler and extension versions.
 - `GET /health` worker health with cached tool versions.
 
+## Verification
+
+- `pnpm verify:samples:dry-run` validates the acceptance fixture inventory and
+  writes `reports/qc-appendix-b.md`.
+- `pnpm verify:samples` runs the sample compile harness against a live worker at
+  `WORKER_URL` or `http://localhost:8787`.
+
 ## License
 
 AGPL-3.0. See [LICENSE](LICENSE).

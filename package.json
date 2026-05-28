@@ -7,7 +7,9 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r --filter \"./packages/*\" build && pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "verify:samples": "node scripts/verify-samples.mjs",
+    "verify:samples:dry-run": "node scripts/verify-samples.mjs --dry-run"
   },
   "engines": {
     "node": ">=22"

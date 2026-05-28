@@ -23,6 +23,7 @@ out/
 .apps/worker/.artifacts/
 apps/worker/.artifacts/
 .artifacts/
+reports/
 
 # Env
 .env
