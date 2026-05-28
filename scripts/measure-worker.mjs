@@ -81,32 +81,44 @@ async function main() {
     entryPath: "index.adoc",
   };
 
-  const runs = [];
+  const warmupRun = await postCompile(workerUrl, compileBody);
+  console.log(
+    `${warmupRun.ok ? "[PASS]" : "[FAIL]"} warm-up compile: ${warmupRun.elapsedMs.toFixed(1)}ms status=${warmupRun.status}`,
+  );
+  if (!warmupRun.ok) {
+    throw new Error("Warm-up compile request failed");
+  }
+
+  const measuredRuns = [];
   for (let index = 0; index < ITERATIONS; index += 1) {
     const run = await postCompile(workerUrl, compileBody);
-    runs.push(run);
+    measuredRuns.push(run);
     console.log(
-      `${run.ok ? "[PASS]" : "[FAIL]"} compile #${index + 1}: ${run.elapsedMs.toFixed(1)}ms status=${run.status}`,
+      `${run.ok ? "[PASS]" : "[FAIL]"} measured compile #${index + 1}: ${run.elapsedMs.toFixed(1)}ms status=${run.status}`,
     );
     if (!run.ok) {
-      throw new Error(`Compile request failed on iteration ${index + 1}`);
+      throw new Error(`Measured compile request failed on iteration ${index + 1}`);
     }
   }
 
-  const durations = runs.map((run) => run.elapsedMs);
-  const first = durations[0] ?? 0;
-  const warmMedian = percentile(durations.slice(1), 50);
-  const p95 = percentile(durations, 95);
+  const measuredDurations = measuredRuns.map((run) => run.elapsedMs);
+  const coldStart = warmupRun.elapsedMs;
+  const firstMeasured = measuredDurations[0] ?? 0;
+  const warmMedian = percentile(measuredDurations, 50);
+  const p95 = percentile(measuredDurations, 95);
   const report = {
     workerUrl,
     iterations: ITERATIONS,
-    p50Ms: percentile(durations, 50),
+    warmupCompileMs: coldStart,
+    coldStartMs: coldStart,
+    p50Ms: percentile(measuredDurations, 50),
     p95Ms: p95,
-    firstCompileMs: first,
+    firstCompileMs: coldStart,
+    firstMeasuredCompileMs: firstMeasured,
     warmMedianMs: warmMedian,
-    jvmWarmHeuristicPassed: warmMedian > 0 ? first > warmMedian : false,
+    jvmWarmHeuristicPassed: warmMedian > 0 ? coldStart > warmMedian : false,
     p95Passed: p95 <= 3000,
-    runs: durations.map((elapsedMs, index) => ({
+    runs: measuredDurations.map((elapsedMs, index) => ({
       index: index + 1,
       elapsedMs,
     })),

@@ -63,8 +63,9 @@ Open `http://localhost:3000`.
 - `pnpm verify:samples` runs the sample compile harness against a live worker at
   `WORKER_URL` or `http://localhost:8787`.
 - `pnpm verify:runtime:dry-run` writes the Section 19 runtime report scaffold.
-- `pnpm verify:runtime` measures repeated small-doc compile latency and records
-  the p95 plus a warm-worker heuristic in `reports/section19-runtime.json`.
+- `pnpm verify:runtime` performs one cold-start warm-up compile, then measures
+  repeated warm small-doc compile latency and records the warm p95 plus a
+  warm-worker heuristic in `reports/section19-runtime.json`.
 - `docker compose config` validates the local self-host topology even when the
   Docker daemon is temporarily unavailable.
 

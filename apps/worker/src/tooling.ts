@@ -31,7 +31,25 @@ function readVersion(command: string[]): string {
     return `exit ${result.status ?? 1}`;
   }
 
-  return output.split(/\r?\n/)[0];
+  const lines = output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const firstLine = lines[0];
+
+  if ((result.status ?? 0) !== 0) {
+    const versionLine = lines.find((line) =>
+      /\b\d+(?:\.\d+)+(?:[-+a-z0-9.]*)?\b/i.test(line),
+    );
+    if (versionLine) {
+      return versionLine;
+    }
+    if (firstLine?.startsWith("Traceback")) {
+      return `error (exit ${result.status ?? 1})`;
+    }
+  }
+
+  return firstLine ?? `exit ${result.status ?? 1}`;
 }
 
 let cachedVersions: Record<string, string> | null = null;
