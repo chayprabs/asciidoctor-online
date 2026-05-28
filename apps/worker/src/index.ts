@@ -85,6 +85,8 @@ app.get("/v1/artifacts/:jobId/:filename", async (c) => {
       ? "application/pdf"
       : filename.endsWith(".epub")
         ? "application/epub+zip"
+        : filename.endsWith(".zip")
+          ? "application/zip"
         : filename.endsWith(".xml")
           ? "application/xml"
           : "text/html";

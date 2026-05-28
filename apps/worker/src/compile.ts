@@ -13,6 +13,7 @@ import {
   redactLogLine,
 } from "@asciidoc-cloud/shared-worker-runtime";
 import { applyIncludePolicy } from "./include-policy.js";
+import { writeProjectArchive } from "./archive.js";
 
 const ASCIIDOCTOR = process.env.ASCIIDOCTOR_BIN ?? "asciidoctor";
 const ASCIIDOCTOR_PDF = process.env.ASCIIDOCTOR_PDF_BIN ?? "asciidoctor-pdf";
@@ -229,6 +230,7 @@ export async function compileProject(
   try {
     const preparedProject = await applyIncludePolicy(project);
     const entry = await writeProject(jobDir, preparedProject, entryPath);
+    const projectArchive = await writeProjectArchive(preparedProject, artifactsRoot, jobId);
     const warnings: string[] = [];
     const missingAssets = new Set<string>();
     const outputs: CompileResult["outputs"] = [];
@@ -258,6 +260,10 @@ export async function compileProject(
 
     return {
       outputs,
+      projectArchive: {
+        filename: projectArchive.filename,
+        url: projectArchive.url,
+      },
       warnings,
       missingAssets: [...missingAssets],
       previewHtml,

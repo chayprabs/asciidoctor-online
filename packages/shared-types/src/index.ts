@@ -24,8 +24,14 @@ export interface CompileOutput {
   filename: string;
 }
 
+export interface ProjectArchive {
+  url: string;
+  filename: string;
+}
+
 export interface CompileResult {
   outputs: CompileOutput[];
+  projectArchive?: ProjectArchive;
   warnings: string[];
   missingAssets: string[];
   previewHtml?: string;

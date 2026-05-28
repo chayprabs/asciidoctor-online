@@ -437,14 +437,28 @@ export function Playground() {
         </section>
 
         <section className="flex min-h-[50vh] flex-col bg-white">
-          <div className="flex border-b border-stone-200">
-            {FORMATS.map((format) => (
-              <OutputLink
-                key={format}
-                format={format}
-                url={compileResult?.outputs.find((output) => output.format === format)?.url}
-              />
-            ))}
+          <div className="flex items-center justify-between border-b border-stone-200">
+            <div className="flex">
+              {FORMATS.map((format) => (
+                <OutputLink
+                  key={format}
+                  format={format}
+                  url={compileResult?.outputs.find((output) => output.format === format)?.url}
+                />
+              ))}
+            </div>
+            <a
+              href={compileResult?.projectArchive?.url ? `/api/worker${compileResult.projectArchive.url}` : "#"}
+              className={`px-3 py-2 text-sm ${
+                compileResult?.projectArchive?.url
+                  ? "text-teal-700 hover:bg-teal-50"
+                  : "pointer-events-none opacity-50"
+              }`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              project.zip
+            </a>
           </div>
 
           <iframe
