@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, rm, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { join } from "node:path";
 import lighthouse from "lighthouse";
@@ -12,10 +12,19 @@ const TMP_DIR = ".tmp/lighthouse";
 const DEBUGGING_PORT = Number(process.env.LIGHTHOUSE_PORT ?? "9222");
 const CATEGORIES = ["performance", "accessibility", "best-practices", "seo"];
 
-function findChromePath() {
+async function findChromePath() {
   const candidates = [
     process.env.CHROME_PATH,
     process.env.LIGHTHOUSE_CHROME_PATH,
+    join(
+      process.cwd(),
+      ".cache",
+      "browsers",
+      "chrome-headless-shell",
+      "win64-149.0.7827.22",
+      "chrome-headless-shell-win64",
+      "chrome-headless-shell.exe",
+    ),
     process.env.ProgramFiles
       ? `${process.env.ProgramFiles}\\Google\\Chrome\\Application\\chrome.exe`
       : undefined,
@@ -33,7 +42,14 @@ function findChromePath() {
       : undefined,
   ].filter(Boolean);
 
-  return candidates[0];
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {}
+  }
+
+  return null;
 }
 
 async function waitForHttp(url, timeoutMs) {
@@ -78,7 +94,7 @@ function summarizeCategories(lhr) {
   );
 }
 
-const chromePath = findChromePath();
+const chromePath = await findChromePath();
 if (!chromePath) {
   throw new Error("Could not find a Chrome or Edge executable. Set CHROME_PATH.");
 }
@@ -133,8 +149,10 @@ try {
     await writeFile(reportPath, result.report);
     summary.push({
       url,
+      browserPath: chromePath,
       reportPath,
       categories,
+      runWarnings: result.lhr.runWarnings,
       passed: Object.values(categories).every((score) => score >= 95),
     });
     console.log(`${slug}: ${JSON.stringify(categories)}`);
