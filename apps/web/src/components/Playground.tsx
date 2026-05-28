@@ -125,12 +125,15 @@ export function Playground() {
   const [remoteAllowlistDraft, setRemoteAllowlistDraft] = useState(
     serializeRemoteIncludeAllowlist(project.remoteIncludeAllowlist),
   );
-  const diagnostics = compileResult
-    ? [
-        ...compileResult.warnings.map((warning) => `warning: ${warning}`),
-        ...compileResult.missingAssets.map((missing) => `missing: ${missing}`),
-      ]
-    : [];
+  const diagnostics = [
+    ...(error ? [`error: ${error}`] : []),
+    ...(compileResult
+      ? [
+          ...compileResult.warnings.map((warning) => `warning: ${warning}`),
+          ...compileResult.missingAssets.map((missing) => `missing: ${missing}`),
+        ]
+      : []),
+  ];
 
   useEffect(() => {
     setPathDraft(activePath);
@@ -565,6 +568,25 @@ export function Playground() {
               srcDoc={compileResult.previewHtml}
               sandbox="allow-same-origin"
             />
+          ) : error ? (
+            <div className="flex min-h-[60vh] flex-1 items-center justify-center bg-rose-50/60 p-8 text-center">
+              <div className="max-w-xl rounded-3xl border border-rose-200 bg-white p-6 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-rose-700">
+                  Compile failed
+                </p>
+                <h3 className="mt-3 text-xl font-semibold text-stone-950">
+                  The worker could not render this project.
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-stone-600">
+                  The exact compiler error is shown below in diagnostics. If you are
+                  running locally, this usually means the Asciidoctor toolchain or
+                  worker runtime is not available on this machine yet.
+                </p>
+                <pre className="mt-4 overflow-auto whitespace-pre-wrap rounded-2xl bg-stone-950 p-4 text-left text-xs text-rose-100">
+                  {error}
+                </pre>
+              </div>
+            </div>
           ) : (
             <div className="flex min-h-[60vh] flex-1 items-center justify-center bg-stone-50 p-8 text-center">
               <div className="max-w-md rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
