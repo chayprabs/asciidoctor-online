@@ -17,12 +17,17 @@ jobs:
           RENDER_WEB_DEPLOY_HOOK: ${{ secrets.RENDER_WEB_DEPLOY_HOOK }}
           RENDER_WORKER_DEPLOY_HOOK: ${{ secrets.RENDER_WORKER_DEPLOY_HOOK }}
         run: |
+          missing=()
+          [ -n "$HOSTED_WEB_URL" ] || missing+=("HOSTED_WEB_URL")
+          [ -n "$HOSTED_API_URL" ] || missing+=("HOSTED_API_URL")
+          [ -n "$RENDER_WEB_DEPLOY_HOOK" ] || missing+=("RENDER_WEB_DEPLOY_HOOK")
+          [ -n "$RENDER_WORKER_DEPLOY_HOOK" ] || missing+=("RENDER_WORKER_DEPLOY_HOOK")
           if [ -n "$HOSTED_WEB_URL" ] && [ -n "$HOSTED_API_URL" ] && [ -n "$RENDER_WEB_DEPLOY_HOOK" ] && [ -n "$RENDER_WORKER_DEPLOY_HOOK" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           echo "ready=false" >> "$GITHUB_OUTPUT"
-          echo "Hosted verification skipped because deploy hooks or hosted URLs are not configured."
+          echo "Hosted verification skipped because these repo settings are missing: ${missing[*]}"
       - uses: actions/checkout@v6
         if: steps.config.outputs.ready == 'true'
       - uses: pnpm/action-setup@v6

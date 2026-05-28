@@ -12,6 +12,7 @@
     "verify:lighthouse:home": "node scripts/run-lighthouse.mjs http://localhost:3000/",
     "verify:preflight": "node scripts/verify-preflight.mjs",
     "verify:ci": "node scripts/verify-ci-evidence.mjs",
+    "verify:hosted:config": "node scripts/verify-hosted-config.mjs",
     "verify:hosted": "node scripts/verify-hosted.mjs",
     "verify:hosted:dry-run": "node scripts/verify-hosted.mjs --dry-run",
     "verify:report": "node scripts/write-qualification-report.mjs",

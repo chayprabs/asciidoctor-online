@@ -92,6 +92,8 @@ pnpm verify:report
 
 GitHub-hosted verification automation:
 
+- Run `pnpm verify:hosted:config` to confirm the required repository variables
+  and secrets exist before expecting a hosted qualification run to proceed.
 - Add repository variables `HOSTED_WEB_URL` and `HOSTED_API_URL`.
 - Add repository secrets `RENDER_WEB_DEPLOY_HOOK` and `RENDER_WORKER_DEPLOY_HOOK`.
 - Push to `main`, or run the `Hosted Verify` workflow manually.
