@@ -11,6 +11,7 @@
     "verify:lighthouse": "node scripts/run-lighthouse.mjs",
     "verify:lighthouse:home": "node scripts/run-lighthouse.mjs http://localhost:3000/",
     "verify:preflight": "node scripts/verify-preflight.mjs",
+    "verify:section19": "node scripts/verify-section19.mjs",
     "verify:samples": "node scripts/verify-samples.mjs",
     "verify:samples:dry-run": "node scripts/verify-samples.mjs --dry-run",
     "verify:runtime": "node scripts/measure-worker.mjs",
