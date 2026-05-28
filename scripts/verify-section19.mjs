@@ -46,7 +46,12 @@ function sectionLine(label, status, detail) {
 }
 
 async function main() {
+  const ci = await maybeReadJson("section19-ci.json");
   const runtime = await maybeReadJson("section19-runtime.json");
+  const runtimeEvidence =
+    typeof runtime?.p95Ms === "number" && typeof runtime?.warmMedianMs === "number"
+      ? runtime
+      : ci?.runtime ?? null;
   const lighthouse = await maybeReadJson("lighthouse-summary.json");
   const appendixB = await maybeReadText("qc-appendix-b.md");
   const dockerOk = await dockerAvailable();
@@ -60,19 +65,19 @@ async function main() {
     "",
   ];
 
-  if (runtime) {
+  if (runtimeEvidence) {
     lines.push(
       sectionLine(
         "19.2 Persistent JRuby warm worker",
-        runtime.jvmWarmHeuristicPassed ? "pass" : "fail",
-        `warmMedian=${runtime.warmMedianMs}ms firstCompile=${runtime.firstCompileMs}ms`,
+        runtimeEvidence.jvmWarmHeuristicPassed ? "pass" : "fail",
+        `warmMedian=${runtimeEvidence.warmMedianMs}ms firstCompile=${runtimeEvidence.firstCompileMs}ms`,
       ),
     );
     lines.push(
       sectionLine(
         "19.13 p95 compile small doc <= 3s",
-        runtime.p95Passed ? "pass" : "fail",
-        `p95=${runtime.p95Ms}ms`,
+        runtimeEvidence.p95Passed ? "pass" : "fail",
+        `p95=${runtimeEvidence.p95Ms}ms`,
       ),
     );
   } else {
@@ -123,12 +128,37 @@ async function main() {
     lines.push(sectionLine("19.13 Lighthouse", "fail", "lighthouse-summary.json missing"));
   }
 
+  if (ci) {
+    lines.push(
+      sectionLine(
+        "19.1 Worker image <= 1.5 GB",
+        ci.image.sizeBytes <= 1610612736 ? "pass" : "fail",
+        `${ci.image.sizeMb} MB (${ci.image.sizeBytes} bytes) via ${ci.runUrl}`,
+      ),
+    );
+    lines.push(
+      sectionLine(
+        "19.3 Worker container health and versions reported",
+        ci.workerJob.conclusion === "success" ? "pass" : "fail",
+        `${ci.workerJob.url}`,
+      ),
+    );
+    lines.push(
+      sectionLine(
+        "19.16 Worker image with JRuby + diagram tools pushed",
+        ci.publishJob.conclusion === "success" ? "pass" : "fail",
+        `${ci.image.repository}:sha-${ci.headSha} via ${ci.publishJob.url}`,
+      ),
+    );
+  } else {
+    lines.push(sectionLine("19.1/19.3/19.16 CI publication evidence", "fail", "section19-ci.json missing"));
+  }
   lines.push(
     sectionLine(
-      "19.1/19.3/19.16 Docker image and local compose verification",
+      "19.3 Local docker compose up healthy",
       dockerOk ? "fail" : "deferred",
       dockerOk
-        ? "Docker is available; rerun image-size and compose checks explicitly."
+        ? "Docker is available; rerun docker compose up verification explicitly."
         : "Docker Desktop Linux engine unavailable on this host.",
     ),
   );

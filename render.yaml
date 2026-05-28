@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: asciidoc-cloud-worker
+    runtime: docker
+    plan: standard
+    region: oregon
+    branch: cursor/asciidoc-cloud-build
+    autoDeploy: true
+    dockerfilePath: ./apps/worker/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8787"
+      - key: ARTIFACTS_DIR
+        value: /tmp/artifacts
+
+  - type: web
+    name: asciidoc-cloud-web
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: cursor/asciidoc-cloud-build
+    autoDeploy: true
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WORKER_URL
+        value: https://asciidoc-cloud-worker.onrender.com
+
+previews:
+  generation: manual

@@ -76,3 +76,6 @@ AGPL-3.0. See [LICENSE](LICENSE).
 ## Self-host
 
 Run `docker compose up` on a clean machine with Docker 24+.
+
+For a hosted deployment bootstrap, the repository also includes
+`render.yaml` with separate web and worker services wired for Render.
