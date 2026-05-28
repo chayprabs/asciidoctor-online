@@ -1,0 +1,43 @@
+name: Hosted Verify
+
+on:
+  push:
+    branches: [main, "cursor/**"]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy-and-verify:
+    if: ${{ vars.HOSTED_WEB_URL != '' && vars.HOSTED_API_URL != '' && secrets.RENDER_WEB_DEPLOY_HOOK != '' && secrets.RENDER_WORKER_DEPLOY_HOOK != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile || pnpm install
+      - name: Trigger worker deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_WORKER_DEPLOY_HOOK }}"
+      - name: Trigger web deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_WEB_DEPLOY_HOOK }}"
+      - name: Wait for hosted deployment
+        env:
+          HOSTED_WEB_URL: ${{ vars.HOSTED_WEB_URL }}
+          HOSTED_API_URL: ${{ vars.HOSTED_API_URL }}
+        run: |
+          for attempt in $(seq 1 40); do
+            if pnpm verify:hosted --web-url="$HOSTED_WEB_URL" --api-url="$HOSTED_API_URL"; then
+              exit 0
+            fi
+            sleep 15
+          done
+          exit 1
+      - name: Refresh Section 19 rollup
+        run: pnpm verify:section19
+
