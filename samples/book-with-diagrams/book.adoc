@@ -1,0 +1,7 @@
+= Diagram Book
+:doctype: book
+:toc:
+
+include::chapters/chapter-1.adoc[]
+
+include::appendix.adoc[]

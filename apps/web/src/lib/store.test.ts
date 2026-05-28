@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  findThemePresetId,
   isEditableFile,
   parseCustomAttributes,
   parseRemoteIncludeAllowlist,
@@ -63,5 +64,34 @@ describe("store helpers", () => {
     expect(serializeRemoteIncludeAllowlist(["docs.example.com", "cdn.example.com"])).toBe(
       "docs.example.com\ncdn.example.com",
     );
+  });
+
+  it("matches a project theme back to a built-in preset id", () => {
+    expect(
+      findThemePresetId({
+        files: [],
+        attributes: {},
+        theme: {
+          format: "yaml",
+          content: `extends: default
+page:
+  layout: portrait
+  margin: [0.6in, 0.7in, 0.7in, 0.7in]
+base:
+  font-color: "222222"
+  line-height-length: 1.4
+role:
+  lead:
+    font-style: italic
+heading:
+  h1-font-size: 24
+  h2-font-size: 18
+  h3-font-size: 15
+link:
+  font-color: "0f766e"
+`,
+        },
+      }),
+    ).toBe("paper-pdf");
   });
 });

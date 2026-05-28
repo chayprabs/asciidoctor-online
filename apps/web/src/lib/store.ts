@@ -7,6 +7,7 @@ import {
   type ProjectFile,
   type ThemeGalleryItem,
 } from "@asciidoc-cloud/shared-types";
+import type { SampleProject } from "./samples";
 
 const DEFAULT_DOC = `= Hello AsciidocCloud
 :toc:
@@ -93,6 +94,22 @@ function upsertFile(files: ProjectFile[], nextFile: ProjectFile): ProjectFile[] 
   return sortFiles([...files, nextFile]);
 }
 
+export function findThemePresetId(
+  project: AsciidocProject,
+): string | null {
+  if (!project.theme) {
+    return null;
+  }
+
+  return (
+    THEME_GALLERY.find(
+      (theme) =>
+        theme.format === project.theme?.format &&
+        theme.content === project.theme?.content,
+    )?.id ?? null
+  );
+}
+
 export function renameProjectFile(
   files: ProjectFile[],
   fromPath: string,
@@ -119,6 +136,7 @@ interface PlaygroundState {
   selectedThemeId: string | null;
   setActivePath: (path: string) => void;
   setEntryPath: (path: string) => void;
+  loadSample: (sample: SampleProject) => void;
   updateFile: (path: string, content: string) => void;
   addFile: (path: string) => void;
   uploadFile: (file: ProjectFile) => void;
@@ -149,6 +167,15 @@ export const usePlayground = create<PlaygroundState>((set, get) => ({
   selectedThemeId: DEFAULT_THEME.id,
   setActivePath: (path) => set({ activePath: path }),
   setEntryPath: (path) => set({ entryPath: path }),
+  loadSample: (sample) =>
+    set({
+      project: sample.project,
+      activePath: sample.entryPath,
+      entryPath: sample.entryPath,
+      compileResult: null,
+      error: null,
+      selectedThemeId: findThemePresetId(sample.project),
+    }),
   updateFile: (path, content) =>
     set({
       project: {

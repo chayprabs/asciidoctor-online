@@ -1,0 +1,16 @@
+= Launch Slides
+:revealjs_theme: white
+:revealjs_slideNumber: true
+
+== Why AsciidocCloud?
+
+* Online compile workflow
+* Diagram feedback loop
+* Theme iteration
+
+== Outputs
+
+* HTML
+* PDF
+* EPUB
+* DocBook

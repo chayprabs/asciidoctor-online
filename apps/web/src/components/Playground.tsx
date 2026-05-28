@@ -15,6 +15,7 @@ import {
   serializeCustomAttributes,
   usePlayground,
 } from "@/lib/store";
+import { SAMPLE_PROJECTS } from "@/lib/samples";
 
 const FORMATS: CompileFormat[] = ["html5", "pdf", "epub", "docbook"];
 const TEXT_UPLOAD_EXTENSIONS =
@@ -89,6 +90,7 @@ export function Playground() {
     selectedThemeId,
     setActivePath,
     setEntryPath,
+    loadSample,
     updateFile,
     addFile,
     uploadFile,
@@ -287,6 +289,23 @@ export function Playground() {
           </ul>
 
           <div className="mt-4 space-y-3 rounded-3xl border border-stone-200 bg-white p-4">
+            <div>
+              <h3 className="text-sm font-semibold">Samples</h3>
+              <div className="mt-3 space-y-2">
+                {SAMPLE_PROJECTS.map((sample) => (
+                  <button
+                    key={sample.id}
+                    type="button"
+                    className="block w-full rounded-2xl border border-stone-200 p-3 text-left hover:border-stone-300"
+                    onClick={() => loadSample(sample)}
+                  >
+                    <div className="font-medium">{sample.name}</div>
+                    <p className="mt-1 text-xs text-stone-500">{sample.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <FileDrop
               label="Upload assets, fonts, and attribute files"
               onFiles={(files) => {

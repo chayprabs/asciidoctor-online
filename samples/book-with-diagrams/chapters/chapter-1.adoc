@@ -1,0 +1,16 @@
+== Chapter One
+
+[graphviz]
+....
+digraph G {
+  rankdir=LR;
+  Author -> Processor -> Output;
+}
+....
+
+[blockdiag]
+....
+blockdiag {
+  editor -> worker -> outputs;
+}
+....
