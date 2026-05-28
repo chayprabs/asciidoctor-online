@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, posix } from "node:path";
 import { spawn } from "node:child_process";
 import type {
@@ -14,10 +14,12 @@ import {
 } from "@asciidoc-cloud/shared-worker-runtime";
 import { applyIncludePolicy } from "./include-policy.js";
 import { writeProjectArchive } from "./archive.js";
+import { getPersistentJrubyRunner } from "./persistent-jruby.js";
 
 const ASCIIDOCTOR = process.env.ASCIIDOCTOR_BIN ?? "asciidoctor";
 const ASCIIDOCTOR_PDF = process.env.ASCIIDOCTOR_PDF_BIN ?? "asciidoctor-pdf";
 const ASCIIDOCTOR_EPUB = process.env.ASCIIDOCTOR_EPUB_BIN ?? "asciidoctor-epub3";
+const JRUBY_RUNNER = process.env.JRUBY_RUNNER ?? "cli";
 const REQUIRED_EXTENSIONS = (process.env.ASCIIDOCTOR_REQUIRE_PATHS ?? "asciidoctor-diagram")
   .split(",")
   .map((item) => item.trim())
@@ -134,11 +136,38 @@ async function compileFormat(
   outDir: string,
 ): Promise<{ path: string; warnings: string[]; missingAssets: string[] }> {
   const base = entry.replace(/\.adoc$/, "");
+  const outputBase = posix.basename(base);
   const warnings: string[] = [];
   const missingAssets: string[] = [];
+  const extensionAwareFormat = format;
+
+  if (JRUBY_RUNNER === "persistent") {
+    const filename =
+      extensionAwareFormat === "html5"
+        ? `${outputBase}.html`
+        : extensionAwareFormat === "pdf"
+          ? `${outputBase}.pdf`
+          : extensionAwareFormat === "epub"
+            ? `${outputBase}.epub`
+            : `${outputBase}.xml`;
+    const out = join(outDir, filename);
+    const response = await getPersistentJrubyRunner().compile({
+      root,
+      entry,
+      format: extensionAwareFormat,
+      output: out,
+      attributesFile: join(root, ".attributes"),
+    });
+    warnings.push(...response.warnings);
+    missingAssets.push(...extractMissingAssets(response.warnings.join("\n")));
+    if (!response.ok) {
+      throw new Error(response.error ?? `Persistent ${format} compile failed`);
+    }
+    return { path: out, warnings, missingAssets };
+  }
 
   if (format === "html5") {
-    const out = join(outDir, `${base}.html`);
+    const out = join(outDir, `${outputBase}.html`);
     const { code, stderr } = await run(
       ASCIIDOCTOR,
       withExtensions([
@@ -157,7 +186,7 @@ async function compileFormat(
   }
 
   if (format === "pdf") {
-    const out = join(outDir, `${base}.pdf`);
+    const out = join(outDir, `${outputBase}.pdf`);
     const { code, stderr } = await run(
       ASCIIDOCTOR_PDF,
       withExtensions([
@@ -176,7 +205,7 @@ async function compileFormat(
   }
 
   if (format === "epub") {
-    const out = join(outDir, `${base}.epub`);
+    const out = join(outDir, `${outputBase}.epub`);
     const { code, stderr } = await run(
       ASCIIDOCTOR_EPUB,
       withExtensions([
@@ -196,7 +225,7 @@ async function compileFormat(
     return { path: out, warnings, missingAssets };
   }
 
-  const out = join(outDir, `${base}.xml`);
+  const out = join(outDir, `${outputBase}.xml`);
   const { code, stderr } = await run(
     ASCIIDOCTOR,
     withExtensions([
@@ -267,7 +296,6 @@ export async function compileProject(
         missingAssets.add(missingAsset);
       }
       const filename = posix.basename(path);
-      await copyFile(path, join(outDir, filename));
       outputs.push({
         format,
         filename,
