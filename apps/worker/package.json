@@ -1,0 +1,27 @@
+{
+  "name": "@asciidoc-cloud/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo ok",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@asciidoc-cloud/shared-types": "workspace:*",
+    "@asciidoc-cloud/shared-worker-runtime": "workspace:*",
+    "@hono/node-server": "^1.14.4",
+    "hono": "^4.7.10",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

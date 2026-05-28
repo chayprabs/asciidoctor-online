@@ -10,3 +10,20 @@ CODEX_GOLD_PROMPTS.md
 CODEX_GOAL_PROMPTS.md
 QUALIFYING_CRITERIA.md
 [0-3][0-9]_*.md
+
+# Dependencies & build
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# Worker artifacts
+.apps/worker/.artifacts/
+apps/worker/.artifacts/
+.artifacts/
+
+# Env
+.env
+.env.*

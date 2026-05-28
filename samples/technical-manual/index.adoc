@@ -1,0 +1,26 @@
+= Technical Manual Sample
+:author: AsciidocCloud
+:toc:
+
+== Overview
+
+This sample exercises HTML, PDF, EPUB, and DocBook output.
+
+== Diagram (Mermaid)
+
+[mermaid]
+....
+flowchart LR
+  A[AsciiDoc] --> B[Asciidoctor]
+  B --> C[HTML/PDF/EPUB]
+....
+
+== PlantUML
+
+[plantuml]
+....
+@startuml
+actor User
+User -> Asciidoctor : compile
+@enduml
+....

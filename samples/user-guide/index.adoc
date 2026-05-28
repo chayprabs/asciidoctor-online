@@ -1,0 +1,10 @@
+= User Guide
+:toc:
+
+== Getting started
+
+Edit `index.adoc` in the playground and click *Compile all*.
+
+== Includes
+
+include::chapter.adoc[]
