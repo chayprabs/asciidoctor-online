@@ -21,3 +21,52 @@ jobs:
       - run: pnpm -r build
       - run: pnpm -r typecheck
       - run: pnpm -r test
+
+  worker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: docker/setup-buildx-action@v3
+      - run: pnpm install --frozen-lockfile || pnpm install
+      - name: Build worker image
+        run: docker build -f apps/worker/Dockerfile -t asciidoctor-online-worker:ci .
+      - name: Measure worker image size
+        run: |
+          SIZE_BYTES=$(docker image inspect asciidoctor-online-worker:ci --format '{{.Size}}')
+          SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
+          echo "Worker image size: ${SIZE_MB} MB (${SIZE_BYTES} bytes)"
+          if [ "$SIZE_BYTES" -gt 1610612736 ]; then
+            echo "Worker image exceeds 1.5 GiB release gate"
+            exit 1
+          fi
+      - name: Start worker container
+        run: |
+          docker run -d --name asciidoctor-online-worker-ci -p 8787:8787 asciidoctor-online-worker:ci
+      - name: Wait for health
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:8787/health >/tmp/worker-health.json; then
+              cat /tmp/worker-health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs asciidoctor-online-worker-ci
+          exit 1
+      - name: Verify runtime performance
+        run: pnpm verify:runtime
+      - name: Verify acceptance samples
+        run: pnpm verify:samples
+      - name: Dump worker logs on failure
+        if: failure()
+        run: docker logs asciidoctor-online-worker-ci
+      - name: Stop worker container
+        if: always()
+        run: docker rm -f asciidoctor-online-worker-ci || true
