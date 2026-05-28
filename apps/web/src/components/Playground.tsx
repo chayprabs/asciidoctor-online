@@ -71,7 +71,11 @@ function OutputLink({
     <a
       href={url ? `/api/worker${url}` : "#"}
       aria-disabled={!url}
-      className={`px-3 py-2 text-sm ${url ? "text-stone-700 hover:bg-gray-100 dark:hover:bg-gray-800" : "pointer-events-none text-stone-600"}`}
+      className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+        url
+          ? "border-stone-200 bg-white text-stone-700 hover:border-teal-700 hover:text-teal-700"
+          : "pointer-events-none border-stone-200 bg-stone-100 text-stone-500"
+      }`}
       target="_blank"
       rel="noreferrer"
     >
@@ -221,14 +225,14 @@ export function Playground() {
   }));
 
   return (
-    <div className="flex min-h-screen flex-col bg-stone-100 text-stone-900">
+    <div className="flex min-h-screen flex-col text-stone-900">
       <AppHeader
         title="AsciidocCloud"
         githubUrl="https://github.com/chayprabs/asciidoctor-online"
       >
         <button
           type="button"
-          className="rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-50"
+          className="rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-800 disabled:opacity-50"
           disabled={compiling}
           onClick={() => void runCompile(FORMATS)}
         >
@@ -236,15 +240,68 @@ export function Playground() {
         </button>
       </AppHeader>
 
-      <main className="grid flex-1 grid-cols-1 lg:grid-cols-[320px_1fr_1fr]">
-        <aside className="border-r border-stone-200 bg-stone-50 p-4">
+      <section className="border-b border-stone-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 lg:px-6">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-teal-700">
+                Fast AsciiDoc compile
+              </p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-stone-950 lg:text-3xl">
+                Edit a project, compile it, and download the exact output you need.
+              </h1>
+              <p className="mt-2 text-sm leading-7 text-stone-600">
+                Start with a sample or upload your files, pick the entry document,
+                then review the live HTML preview and export PDF, EPUB, DocBook,
+                or the full project ZIP.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:border-stone-400 hover:text-stone-950"
+                onClick={() => loadSample(SAMPLE_PROJECTS[0])}
+              >
+                Load sample
+              </button>
+              <button
+                type="button"
+                className="rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-800 disabled:opacity-50"
+                disabled={compiling}
+                onClick={() => void runCompile(FORMATS)}
+              >
+                {compiling ? "Compiling..." : "Compile all formats"}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-3">
+            {[
+              ["1. Build the project", "Add files, upload assets, or start from a fixture."],
+              ["2. Edit the entry file", "Keep the right `.adoc` file selected as the compile entry."],
+              ["3. Review and export", "Check preview, diagnostics, and download each output."],
+            ].map(([title, body]) => (
+              <div
+                key={title}
+                className="rounded-3xl border border-stone-200 bg-[#fffdf8] px-4 py-3 shadow-sm"
+              >
+                <p className="text-sm font-semibold text-stone-950">{title}</p>
+                <p className="mt-1 text-sm leading-6 text-stone-600">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <main className="grid flex-1 grid-cols-1 lg:grid-cols-[320px_1fr_1fr] xl:grid-cols-[340px_1.05fr_0.95fr]">
+        <aside className="border-r border-stone-200 bg-white/80 p-4 backdrop-blur lg:p-5">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-stone-500">
-                Project
+                1. Project
               </h2>
               <p className="text-xs text-stone-500">
-                Multi-file tree, uploads, attributes, and themes.
+                Files, uploads, attributes, and theme setup live here.
               </p>
             </div>
             <button
@@ -258,7 +315,7 @@ export function Playground() {
 
           <ul className="mt-4 space-y-2">
             {project.files.map((file) => (
-              <li key={file.path} className="rounded-2xl border border-stone-200 bg-white p-2">
+              <li key={file.path} className="rounded-2xl border border-stone-200 bg-[#fffdf8] p-2 shadow-sm">
                 <button
                   type="button"
                   className={`flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1 text-left text-sm ${
@@ -297,7 +354,7 @@ export function Playground() {
             ))}
           </ul>
 
-          <div className="mt-4 space-y-3 rounded-3xl border border-stone-200 bg-white p-4">
+          <div className="mt-4 space-y-3 rounded-3xl border border-stone-200 bg-[#fffdf8] p-4 shadow-sm">
             <div>
               <h3 className="text-sm font-semibold">Samples</h3>
               <div className="mt-3 space-y-2">
@@ -330,7 +387,7 @@ export function Playground() {
             />
           </div>
 
-          <div className="mt-4 rounded-3xl border border-stone-200 bg-white p-4">
+          <div className="mt-4 rounded-3xl border border-stone-200 bg-[#fffdf8] p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Theme gallery</h3>
               <button
@@ -365,7 +422,7 @@ export function Playground() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-3xl border border-stone-200 bg-white p-4">
+          <div className="mt-4 rounded-3xl border border-stone-200 bg-[#fffdf8] p-4 shadow-sm">
             <h3 className="text-sm font-semibold">Attributes</h3>
             <div className="mt-3 space-y-3">
               {commonAttributes.map(({ key, value }) => (
@@ -392,7 +449,7 @@ export function Playground() {
             </label>
           </div>
 
-          <div className="mt-4 rounded-3xl border border-stone-200 bg-white p-4">
+          <div className="mt-4 rounded-3xl border border-stone-200 bg-[#fffdf8] p-4 shadow-sm">
             <h3 className="text-sm font-semibold">Includes</h3>
             <p className="mt-1 text-xs text-stone-500">
               Local includes stay sandboxed in the project tree. Remote includes
@@ -412,15 +469,15 @@ export function Playground() {
           </div>
         </aside>
 
-        <section className="flex min-h-[50vh] flex-col border-r border-stone-200 bg-[#fffdf8]">
+        <section className="flex min-h-[50vh] flex-col border-r border-stone-200 bg-[#fffdf8]/90 backdrop-blur">
           <div className="border-b border-stone-200 px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-xs uppercase tracking-[0.18em] text-stone-500">
-                  Editor
+                  2. Editor
                 </div>
                 <div className="text-sm text-stone-600">
-                  Rename files and choose which `.adoc` entry compiles.
+                  Edit the active file and point the compiler at the right entry.
                 </div>
               </div>
               <div className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-600">
@@ -465,9 +522,18 @@ export function Playground() {
           ) : null}
         </section>
 
-        <section className="flex min-h-[50vh] flex-col bg-white">
-          <div className="flex items-center justify-between border-b border-stone-200">
-            <div className="flex">
+        <section className="flex min-h-[50vh] flex-col bg-white/90 backdrop-blur">
+          <div className="border-b border-stone-200 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-xs uppercase tracking-[0.18em] text-stone-500">
+                  3. Preview and downloads
+                </div>
+                <div className="text-sm text-stone-600">
+                  Review the HTML preview, check diagnostics, and open each export.
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
               {FORMATS.map((format) => (
                 <OutputLink
                   key={format}
@@ -475,20 +541,21 @@ export function Playground() {
                   url={compileResult?.outputs.find((output) => output.format === format)?.url}
                 />
               ))}
+                <a
+                  href={compileResult?.projectArchive?.url ? `/api/worker${compileResult.projectArchive.url}` : "#"}
+                  aria-disabled={!compileResult?.projectArchive?.url}
+                  className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+                    compileResult?.projectArchive?.url
+                      ? "border-teal-200 bg-teal-50 text-teal-700 hover:border-teal-700"
+                      : "pointer-events-none border-stone-200 bg-stone-100 text-stone-500"
+                  }`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  project.zip
+                </a>
+              </div>
             </div>
-            <a
-              href={compileResult?.projectArchive?.url ? `/api/worker${compileResult.projectArchive.url}` : "#"}
-              aria-disabled={!compileResult?.projectArchive?.url}
-              className={`px-3 py-2 text-sm ${
-                compileResult?.projectArchive?.url
-                  ? "text-teal-700 hover:bg-teal-50"
-                  : "pointer-events-none text-stone-600"
-              }`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              project.zip
-            </a>
           </div>
 
           {compileResult?.previewHtml ? (
