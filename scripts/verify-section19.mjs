@@ -47,6 +47,7 @@ function sectionLine(label, status, detail) {
 
 async function main() {
   const ci = await maybeReadJson("section19-ci.json");
+  const hosted = await maybeReadJson("section19-hosted.json");
   const runtime = await maybeReadJson("section19-runtime.json");
   const runtimeEvidence =
     typeof runtime?.p95Ms === "number" && typeof runtime?.warmMedianMs === "number"
@@ -164,9 +165,20 @@ async function main() {
   );
   lines.push(
     sectionLine(
+      "19.18 Hosted routes",
+      hosted?.allRoutesPassed ? "pass" : "deferred",
+      hosted?.allRoutesPassed
+        ? `${hosted.webUrl} ${hosted.routes.map((route) => `${route.route}=${route.status}`).join(", ")}`
+        : "Run verify:hosted with a deployed web URL.",
+    ),
+  );
+  lines.push(
+    sectionLine(
       "19.16 Hosted URLs and pushed worker image",
-      "deferred",
-      "Hosted deployment and registry publication not yet verified in current evidence.",
+      hosted?.hostedCompilePassed && (hosted.apiHealthPassed ?? true) ? "pass" : "deferred",
+      hosted?.hostedCompilePassed
+        ? `${hosted.compile.url} status=${hosted.compile.status}${hosted.apiHealth ? ` api=${hosted.apiHealth.url} status=${hosted.apiHealth.status}` : ""}`
+        : "Hosted deployment not yet verified in current evidence.",
     ),
   );
   lines.push(

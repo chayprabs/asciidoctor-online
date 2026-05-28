@@ -79,3 +79,12 @@ Run `docker compose up` on a clean machine with Docker 24+.
 
 For a hosted deployment bootstrap, the repository also includes
 `render.yaml` with separate web and worker services wired for Render.
+
+Hosted qualification handoff:
+
+```bash
+pnpm verify:hosted:dry-run
+# deploy the web and worker from render.yaml
+pnpm verify:hosted --web-url=https://<web-host> --api-url=https://<worker-host>
+pnpm verify:section19
+```
