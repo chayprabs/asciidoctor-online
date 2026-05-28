@@ -68,6 +68,21 @@ export function serializeCustomAttributes(
     .join("\n");
 }
 
+export function parseRemoteIncludeAllowlist(input: string): string[] {
+  return Array.from(
+    new Set(
+      input
+        .split(/[\r\n,]+/)
+        .map((entry) => entry.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+}
+
+export function serializeRemoteIncludeAllowlist(hosts: string[] | undefined): string {
+  return (hosts ?? []).join("\n");
+}
+
 function upsertFile(files: ProjectFile[], nextFile: ProjectFile): ProjectFile[] {
   const match = files.find((file) => file.path === nextFile.path);
   if (match) {
@@ -111,6 +126,7 @@ interface PlaygroundState {
   removeFile: (path: string) => void;
   setAttribute: (key: string, value: string) => void;
   setCustomAttributes: (input: string) => void;
+  setRemoteIncludeAllowlist: (input: string) => void;
   setTheme: (format: "yaml" | "css", content: string) => void;
   setThemePreset: (theme: ThemeGalleryItem | null) => void;
   setCompileResult: (result: CompileResult | null) => void;
@@ -123,6 +139,7 @@ export const usePlayground = create<PlaygroundState>((set, get) => ({
     files: [{ path: "index.adoc", content: DEFAULT_DOC }],
     attributes: { author: "You", revdate: new Date().toISOString().slice(0, 10) },
     theme: { format: DEFAULT_THEME.format, content: DEFAULT_THEME.content },
+    remoteIncludeAllowlist: [],
   },
   activePath: "index.adoc",
   entryPath: "index.adoc",
@@ -199,6 +216,13 @@ export const usePlayground = create<PlaygroundState>((set, get) => ({
           ),
           ...parseCustomAttributes(input),
         },
+      },
+    }),
+  setRemoteIncludeAllowlist: (input) =>
+    set({
+      project: {
+        ...get().project,
+        remoteIncludeAllowlist: parseRemoteIncludeAllowlist(input),
       },
     }),
   setTheme: (format, content) =>

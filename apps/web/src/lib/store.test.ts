@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   isEditableFile,
   parseCustomAttributes,
+  parseRemoteIncludeAllowlist,
   renameProjectFile,
+  serializeRemoteIncludeAllowlist,
   serializeCustomAttributes,
 } from "./store";
 
@@ -49,5 +51,17 @@ describe("store helpers", () => {
         encoding: "base64",
       }),
     ).toBe(false);
+  });
+
+  it("normalizes remote include allowlist entries", () => {
+    expect(
+      parseRemoteIncludeAllowlist("docs.example.com\nDocs.Example.com, cdn.example.com"),
+    ).toEqual(["docs.example.com", "cdn.example.com"]);
+  });
+
+  it("serializes remote include allowlist entries for the editor", () => {
+    expect(serializeRemoteIncludeAllowlist(["docs.example.com", "cdn.example.com"])).toBe(
+      "docs.example.com\ncdn.example.com",
+    );
   });
 });

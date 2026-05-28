@@ -17,7 +17,14 @@ const artifactsRoot = process.env.ARTIFACTS_DIR ?? join(process.cwd(), ".artifac
 
 const compileSchema = z.object({
   project: z.object({
-    files: z.array(z.object({ path: z.string(), content: z.string() })),
+    files: z.array(
+      z.object({
+        path: z.string(),
+        content: z.string(),
+        encoding: z.enum(["utf8", "base64"]).optional(),
+        mediaType: z.string().optional(),
+      }),
+    ),
     attributes: z.record(z.string()),
     theme: z
       .object({

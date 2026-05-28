@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { compileProject } from "@/lib/compile-client";
 import {
   isEditableFile,
+  serializeRemoteIncludeAllowlist,
   serializeCustomAttributes,
   usePlayground,
 } from "@/lib/store";
@@ -95,6 +96,7 @@ export function Playground() {
     removeFile,
     setAttribute,
     setCustomAttributes,
+    setRemoteIncludeAllowlist,
     setTheme,
     setThemePreset,
     setCompileResult,
@@ -112,6 +114,9 @@ export function Playground() {
   const [customAttributeDraft, setCustomAttributeDraft] = useState(
     serializeCustomAttributes(project.attributes),
   );
+  const [remoteAllowlistDraft, setRemoteAllowlistDraft] = useState(
+    serializeRemoteIncludeAllowlist(project.remoteIncludeAllowlist),
+  );
   const diagnostics = compileResult
     ? [
         ...compileResult.warnings.map((warning) => `warning: ${warning}`),
@@ -126,6 +131,12 @@ export function Playground() {
   useEffect(() => {
     setCustomAttributeDraft(serializeCustomAttributes(project.attributes));
   }, [project.attributes]);
+
+  useEffect(() => {
+    setRemoteAllowlistDraft(
+      serializeRemoteIncludeAllowlist(project.remoteIncludeAllowlist),
+    );
+  }, [project.remoteIncludeAllowlist]);
 
   useEffect(() => {
     let cancelled = false;
@@ -348,6 +359,25 @@ export function Playground() {
                 onChange={(event) => setCustomAttributeDraft(event.target.value)}
                 onBlur={() => setCustomAttributes(customAttributeDraft)}
                 placeholder="icons=font&#10;sectanchors="
+                spellCheck={false}
+              />
+            </label>
+          </div>
+
+          <div className="mt-4 rounded-3xl border border-stone-200 bg-white p-4">
+            <h3 className="text-sm font-semibold">Includes</h3>
+            <p className="mt-1 text-xs text-stone-500">
+              Local includes stay sandboxed in the project tree. Remote includes
+              must use HTTPS and an allowlisted host.
+            </p>
+            <label className="mt-3 block text-xs font-medium text-stone-600">
+              Remote include allowlist
+              <textarea
+                className="mt-1 min-h-24 w-full rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 font-mono text-sm text-stone-900 outline-none focus:border-teal-700"
+                value={remoteAllowlistDraft}
+                onChange={(event) => setRemoteAllowlistDraft(event.target.value)}
+                onBlur={() => setRemoteIncludeAllowlist(remoteAllowlistDraft)}
+                placeholder="docs.example.com&#10;cdn.example.com"
                 spellCheck={false}
               />
             </label>
