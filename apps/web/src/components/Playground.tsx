@@ -7,7 +7,7 @@ import {
   type CompileFormat,
   type ProjectFile,
 } from "@asciidoc-cloud/shared-types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { compileProject } from "@/lib/compile-client";
 import {
   isEditableFile,
@@ -70,7 +70,8 @@ function OutputLink({
   return (
     <a
       href={url ? `/api/worker${url}` : "#"}
-      className={`px-3 py-2 text-sm ${url ? "hover:bg-gray-100 dark:hover:bg-gray-800" : "pointer-events-none opacity-50"}`}
+      aria-disabled={!url}
+      className={`px-3 py-2 text-sm ${url ? "text-stone-700 hover:bg-gray-100 dark:hover:bg-gray-800" : "pointer-events-none text-stone-600"}`}
       target="_blank"
       rel="noreferrer"
     >
@@ -112,6 +113,7 @@ export function Playground() {
   );
   const debouncedProject = useDebounced(project, 800);
   const debouncedEntryPath = useDebounced(entryPath, 800);
+  const previewEnabledRef = useRef(false);
   const [pathDraft, setPathDraft] = useState(activePath);
   const [customAttributeDraft, setCustomAttributeDraft] = useState(
     serializeCustomAttributes(project.attributes),
@@ -142,6 +144,13 @@ export function Playground() {
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!previewEnabledRef.current) {
+      previewEnabledRef.current = true;
+      return () => {
+        cancelled = true;
+      };
+    }
 
     async function runPreviewCompile() {
       setCompiling(true);
@@ -258,7 +267,7 @@ export function Playground() {
                   onClick={() => setActivePath(file.path)}
                 >
                   <span className="truncate">{file.path}</span>
-                  <span className="shrink-0 text-[10px] uppercase tracking-[0.2em] text-stone-400">
+                  <span className="shrink-0 text-[10px] uppercase tracking-[0.2em] text-stone-600">
                     {file.path === entryPath ? "entry" : file.encoding === "base64" ? "asset" : "text"}
                   </span>
                 </button>
@@ -433,6 +442,7 @@ export function Playground() {
             <textarea
               className="min-h-[60vh] flex-1 resize-none bg-transparent p-4 font-mono text-sm outline-none"
               value={activeFile?.content ?? ""}
+              aria-label="AsciiDoc editor content"
               onChange={(event) => updateFile(activePath, event.target.value)}
               spellCheck={false}
             />
@@ -468,10 +478,11 @@ export function Playground() {
             </div>
             <a
               href={compileResult?.projectArchive?.url ? `/api/worker${compileResult.projectArchive.url}` : "#"}
+              aria-disabled={!compileResult?.projectArchive?.url}
               className={`px-3 py-2 text-sm ${
                 compileResult?.projectArchive?.url
                   ? "text-teal-700 hover:bg-teal-50"
-                  : "pointer-events-none opacity-50"
+                  : "pointer-events-none text-stone-600"
               }`}
               target="_blank"
               rel="noreferrer"
@@ -480,12 +491,29 @@ export function Playground() {
             </a>
           </div>
 
-          <iframe
-            title="HTML preview"
-            className="min-h-[60vh] flex-1 bg-white"
-            srcDoc={compileResult?.previewHtml ?? "<p>Preview will appear after compile.</p>"}
-            sandbox="allow-same-origin"
-          />
+          {compileResult?.previewHtml ? (
+            <iframe
+              title="HTML preview"
+              className="min-h-[60vh] flex-1 bg-white"
+              srcDoc={compileResult.previewHtml}
+              sandbox="allow-same-origin"
+            />
+          ) : (
+            <div className="flex min-h-[60vh] flex-1 items-center justify-center bg-stone-50 p-8 text-center">
+              <div className="max-w-md rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-stone-500">
+                  Preview
+                </p>
+                <h3 className="mt-3 text-xl font-semibold text-stone-950">
+                  Live preview starts after the first edit or sample load.
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-stone-600">
+                  The initial page load stays lighter by deferring the first compile
+                  until you change the project or run a manual compile.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4 border-t border-stone-200 bg-stone-50 p-4 lg:grid-cols-2">
             <div>

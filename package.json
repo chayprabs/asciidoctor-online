@@ -8,6 +8,8 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r --filter \"./packages/*\" build && pnpm -r typecheck",
     "test": "pnpm -r test",
+    "verify:lighthouse": "node scripts/run-lighthouse.mjs",
+    "verify:lighthouse:home": "node scripts/run-lighthouse.mjs http://localhost:3000/",
     "verify:preflight": "node scripts/verify-preflight.mjs",
     "verify:samples": "node scripts/verify-samples.mjs",
     "verify:samples:dry-run": "node scripts/verify-samples.mjs --dry-run",
@@ -16,5 +18,8 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "lighthouse": "^13.3.0"
   }
 }
