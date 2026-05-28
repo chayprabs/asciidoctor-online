@@ -15,6 +15,11 @@ import {
 
 const ASCIIDOCTOR = process.env.ASCIIDOCTOR_BIN ?? "asciidoctor";
 const ASCIIDOCTOR_PDF = process.env.ASCIIDOCTOR_PDF_BIN ?? "asciidoctor-pdf";
+const ASCIIDOCTOR_EPUB = process.env.ASCIIDOCTOR_EPUB_BIN ?? "asciidoctor-epub3";
+const REQUIRED_EXTENSIONS = (process.env.ASCIIDOCTOR_REQUIRE_PATHS ?? "asciidoctor-diagram")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
 
 function run(cmd: string, args: string[], cwd: string): Promise<{ code: number; stderr: string }> {
   return new Promise((resolve) => {
@@ -33,6 +38,31 @@ function normalizePath(p: string): string {
     throw new Error(`Invalid path: ${p}`);
   }
   return cleaned;
+}
+
+function withExtensions(args: string[]): string[] {
+  return REQUIRED_EXTENSIONS.flatMap((extension) => ["-r", extension]).concat(args);
+}
+
+export function extractMissingAssets(stderr: string): string[] {
+  const lines = stderr.split(/\r?\n/);
+  const missing = new Set<string>();
+
+  for (const line of lines) {
+    if (!/not found|not readable/i.test(line)) {
+      continue;
+    }
+
+    const match = line.match(/line (\d+): (.+)$/i);
+    if (match) {
+      missing.add(`line ${match[1]}: ${match[2].trim()}`);
+      continue;
+    }
+
+    missing.add(line.trim());
+  }
+
+  return [...missing];
 }
 
 export function pickEntryPath(
@@ -100,39 +130,54 @@ async function compileFormat(
   entry: string,
   format: CompileFormat,
   outDir: string,
-): Promise<{ path: string; warnings: string[] }> {
+): Promise<{ path: string; warnings: string[]; missingAssets: string[] }> {
   const base = entry.replace(/\.adoc$/, "");
   const warnings: string[] = [];
+  const missingAssets: string[] = [];
 
   if (format === "html5") {
     const out = join(outDir, `${base}.html`);
     const { code, stderr } = await run(
       ASCIIDOCTOR,
-      ["-a", "attributes-file=.attributes", "-o", out, join(root, entry)],
+      withExtensions([
+        "-a",
+        "attributes-file=.attributes",
+        "-o",
+        out,
+        join(root, entry),
+      ]),
       root,
     );
     if (stderr) warnings.push(stderr);
+    missingAssets.push(...extractMissingAssets(stderr));
     if (code !== 0) throw new Error(`HTML compile failed: ${stderr}`);
-    return { path: out, warnings };
+    return { path: out, warnings, missingAssets };
   }
 
   if (format === "pdf") {
     const out = join(outDir, `${base}.pdf`);
     const { code, stderr } = await run(
       ASCIIDOCTOR_PDF,
-      ["-a", "attributes-file=.attributes", "-o", out, join(root, entry)],
+      withExtensions([
+        "-a",
+        "attributes-file=.attributes",
+        "-o",
+        out,
+        join(root, entry),
+      ]),
       root,
     );
     if (stderr) warnings.push(stderr);
+    missingAssets.push(...extractMissingAssets(stderr));
     if (code !== 0) throw new Error(`PDF compile failed: ${stderr}`);
-    return { path: out, warnings };
+    return { path: out, warnings, missingAssets };
   }
 
   if (format === "epub") {
     const out = join(outDir, `${base}.epub`);
     const { code, stderr } = await run(
-      ASCIIDOCTOR,
-      [
+      ASCIIDOCTOR_EPUB,
+      withExtensions([
         "-b",
         "epub3",
         "-a",
@@ -140,18 +185,19 @@ async function compileFormat(
         "-o",
         out,
         join(root, entry),
-      ],
+      ]),
       root,
     );
     if (stderr) warnings.push(stderr);
+    missingAssets.push(...extractMissingAssets(stderr));
     if (code !== 0) throw new Error(`EPUB compile failed: ${stderr}`);
-    return { path: out, warnings };
+    return { path: out, warnings, missingAssets };
   }
 
   const out = join(outDir, `${base}.xml`);
   const { code, stderr } = await run(
     ASCIIDOCTOR,
-    [
+    withExtensions([
       "-b",
       "docbook5",
       "-a",
@@ -159,12 +205,13 @@ async function compileFormat(
       "-o",
       out,
       join(root, entry),
-    ],
+    ]),
     root,
   );
   if (stderr) warnings.push(stderr);
+  missingAssets.push(...extractMissingAssets(stderr));
   if (code !== 0) throw new Error(`DocBook compile failed: ${stderr}`);
-  return { path: out, warnings };
+  return { path: out, warnings, missingAssets };
 }
 
 export async function compileProject(
@@ -181,12 +228,20 @@ export async function compileProject(
   try {
     const entry = await writeProject(jobDir, project, entryPath);
     const warnings: string[] = [];
+    const missingAssets = new Set<string>();
     const outputs: CompileResult["outputs"] = [];
     let previewHtml: string | undefined;
 
     for (const format of targets) {
-      const { path, warnings: w } = await compileFormat(jobDir, entry, format, outDir);
-      warnings.push(...w);
+      const {
+        path,
+        warnings: formatWarnings,
+        missingAssets: formatMissingAssets,
+      } = await compileFormat(jobDir, entry, format, outDir);
+      warnings.push(...formatWarnings);
+      for (const missingAsset of formatMissingAssets) {
+        missingAssets.add(missingAsset);
+      }
       const filename = posix.basename(path);
       await copyFile(path, join(outDir, filename));
       outputs.push({
@@ -199,7 +254,12 @@ export async function compileProject(
       }
     }
 
-    return { outputs, warnings, missingAssets: [], previewHtml };
+    return {
+      outputs,
+      warnings,
+      missingAssets: [...missingAssets],
+      previewHtml,
+    };
   } finally {
     await cleanupJobDir(jobDir);
   }

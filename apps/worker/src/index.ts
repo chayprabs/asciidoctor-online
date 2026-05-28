@@ -9,6 +9,7 @@ import {
   type CompileFormat,
 } from "@asciidoc-cloud/shared-types";
 import { compileProject } from "./compile.js";
+import { getToolVersions } from "./tooling.js";
 
 const app = new Hono();
 const port = Number(process.env.PORT ?? 8787);
@@ -35,10 +36,12 @@ app.get("/health", (c) =>
     ok: true,
     service: "asciidoc-cloud-worker",
     asciidoctor: process.env.ASCIIDOCTOR_BIN ?? "asciidoctor",
+    versions: getToolVersions(),
   }),
 );
 
 app.get("/v1/themes", (c) => c.json({ items: THEME_GALLERY }));
+app.get("/v1/tooling", (c) => c.json({ versions: getToolVersions() }));
 
 app.post("/v1/compile", async (c) => {
   const body = await c.req.json();

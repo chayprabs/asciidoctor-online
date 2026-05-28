@@ -2,10 +2,25 @@ FROM jruby:9.4-jdk17
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     graphviz \
+    plantuml \
+    ditaa \
+    python3 \
+    python3-pip \
+    nodejs \
+    npm \
+    chromium \
+    ca-certificates \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN gem install asciidoctor:2.0.23 asciidoctor-pdf:2.3.19 asciidoctor-epub3:2.2.0
+RUN gem install \
+    asciidoctor:2.0.23 \
+    asciidoctor-pdf:2.3.19 \
+    asciidoctor-epub3:2.2.0 \
+    asciidoctor-diagram:3.0.1
+
+RUN npm install --global @mermaid-js/mermaid-cli@11.12.0 \
+    && pip3 install --no-cache-dir blockdiag==3.0.0
 
 WORKDIR /app
 
@@ -22,6 +37,12 @@ RUN curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=10.33.1 sh - \
 
 ENV ASCIIDOCTOR_BIN=asciidoctor
 ENV ASCIIDOCTOR_PDF_BIN=asciidoctor-pdf
+ENV ASCIIDOCTOR_EPUB_BIN=asciidoctor-epub3
+ENV ASCIIDOCTOR_REQUIRE_PATHS=asciidoctor-diagram
+ENV MERMAID_BIN=mmdc
+ENV GRAPHVIZ_BIN=dot
+ENV BLOCKDIAG_BIN=blockdiag
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PORT=8787
 ENV ARTIFACTS_DIR=/tmp/artifacts
 

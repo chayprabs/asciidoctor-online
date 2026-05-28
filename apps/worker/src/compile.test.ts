@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { fileContentToBuffer, pickEntryPath } from "./compile.js";
+import {
+  extractMissingAssets,
+  fileContentToBuffer,
+  pickEntryPath,
+} from "./compile.js";
 
 describe("compile helpers", () => {
   it("prefers the requested entry path when it exists", () => {
@@ -39,5 +43,17 @@ describe("compile helpers", () => {
         encoding: "base64",
       }),
     ).toEqual(Buffer.from([0, 1, 2]));
+  });
+
+  it("extracts missing assets and line numbers from compiler warnings", () => {
+    expect(
+      extractMissingAssets(
+        "asciidoctor: WARNING: index.adoc: line 18: image to embed not found or not readable: assets/logo.png\n" +
+          "asciidoctor: WARNING: index.adoc: line 22: include file not found: chapter.adoc",
+      ),
+    ).toEqual([
+      "line 18: image to embed not found or not readable: assets/logo.png",
+      "line 22: include file not found: chapter.adoc",
+    ]);
   });
 });
