@@ -8,7 +8,11 @@ import {
   type ProjectFile,
 } from "@asciidoc-cloud/shared-types";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { compileProject } from "@/lib/compile-client";
+import {
+  compileProject,
+  getWorkerHealth,
+  type WorkerHealth,
+} from "@/lib/compile-client";
 import {
   isEditableFile,
   serializeRemoteIncludeAllowlist,
@@ -20,6 +24,12 @@ import { SAMPLE_PROJECTS } from "@/lib/samples";
 const FORMATS: CompileFormat[] = ["html5", "pdf", "epub", "docbook"];
 const TEXT_UPLOAD_EXTENSIONS =
   /\.(adoc|asciidoc|txt|md|css|ya?ml|json|xml|svg|puml|mmd|dot|diag)$/i;
+const REQUIRED_LOCAL_TOOLS = [
+  "jruby",
+  "asciidoctor",
+  "asciidoctor-pdf",
+  "asciidoctor-epub3",
+] as const;
 
 function useDebounced<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -125,6 +135,8 @@ export function Playground() {
   const [remoteAllowlistDraft, setRemoteAllowlistDraft] = useState(
     serializeRemoteIncludeAllowlist(project.remoteIncludeAllowlist),
   );
+  const [workerHealth, setWorkerHealth] = useState<WorkerHealth | null>(null);
+  const [workerHealthError, setWorkerHealthError] = useState<string | null>(null);
   const diagnostics = [
     ...(error ? [`error: ${error}`] : []),
     ...(compileResult
@@ -134,6 +146,18 @@ export function Playground() {
         ]
       : []),
   ];
+  const missingCoreTools = useMemo(
+    () =>
+      workerHealth
+        ? REQUIRED_LOCAL_TOOLS.filter(
+            (tool) => workerHealth.versions[tool]?.toLowerCase() === "missing",
+          )
+        : [],
+    [workerHealth],
+  );
+  const workerUnavailableMessage = missingCoreTools.length
+    ? `Worker setup incomplete: missing ${missingCoreTools.join(", ")}.`
+    : null;
 
   useEffect(() => {
     setPathDraft(activePath);
@@ -152,8 +176,44 @@ export function Playground() {
   useEffect(() => {
     let cancelled = false;
 
+    async function loadWorkerHealth() {
+      try {
+        const nextHealth = await getWorkerHealth();
+        if (!cancelled) {
+          setWorkerHealth(nextHealth);
+          setWorkerHealthError(null);
+        }
+      } catch (healthError) {
+        if (!cancelled) {
+          setWorkerHealth(null);
+          setWorkerHealthError(
+            healthError instanceof Error
+              ? healthError.message
+              : "Worker health check failed",
+          );
+        }
+      }
+    }
+
+    void loadWorkerHealth();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     if (!previewEnabledRef.current) {
       previewEnabledRef.current = true;
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (workerUnavailableMessage) {
+      setCompiling(false);
       return () => {
         cancelled = true;
       };
@@ -192,9 +252,16 @@ export function Playground() {
     setCompileResult,
     setCompiling,
     setError,
+    workerUnavailableMessage,
   ]);
 
   async function runCompile(targets: CompileFormat[] = ["html5"]) {
+    if (workerUnavailableMessage) {
+      setCompileResult(null);
+      setError(workerUnavailableMessage);
+      return;
+    }
+
     setCompiling(true);
     setError(null);
 
@@ -236,10 +303,14 @@ export function Playground() {
         <button
           type="button"
           className="rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-800 disabled:opacity-50"
-          disabled={compiling}
+          disabled={compiling || Boolean(workerUnavailableMessage)}
           onClick={() => void runCompile(FORMATS)}
         >
-          {compiling ? "Compiling..." : "Compile all"}
+          {workerUnavailableMessage
+            ? "Worker not ready"
+            : compiling
+              ? "Compiling..."
+              : "Compile all"}
         </button>
       </AppHeader>
 
@@ -270,12 +341,38 @@ export function Playground() {
               <button
                 type="button"
                 className="rounded-full bg-teal-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-800 disabled:opacity-50"
-                disabled={compiling}
+                disabled={compiling || Boolean(workerUnavailableMessage)}
                 onClick={() => void runCompile(FORMATS)}
               >
-                {compiling ? "Compiling..." : "Compile all formats"}
+                {workerUnavailableMessage
+                  ? "Worker not ready"
+                  : compiling
+                    ? "Compiling..."
+                    : "Compile all formats"}
               </button>
             </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-stone-200 bg-[#fffdf8] px-4 py-3 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
+              Worker status
+            </p>
+            {workerUnavailableMessage ? (
+              <p className="text-sm text-amber-800">
+                {workerUnavailableMessage} Install the local toolchain or point
+                `WORKER_URL` at a configured worker.
+              </p>
+            ) : workerHealth ? (
+              <p className="text-sm text-teal-800">
+                Ready. HTML, PDF, EPUB, and DocBook requests can be sent to the worker.
+              </p>
+            ) : workerHealthError ? (
+              <p className="text-sm text-stone-600">
+                Worker health check unavailable. Compile can still work once the worker is reachable.
+              </p>
+            ) : (
+              <p className="text-sm text-stone-600">Checking worker availability.</p>
+            )}
           </div>
 
           <div className="grid gap-3 lg:grid-cols-3">
@@ -568,6 +665,22 @@ export function Playground() {
               srcDoc={compileResult.previewHtml}
               sandbox="allow-same-origin"
             />
+          ) : workerUnavailableMessage ? (
+            <div className="flex min-h-[60vh] flex-1 items-center justify-center bg-amber-50/70 p-8 text-center">
+              <div className="max-w-xl rounded-3xl border border-amber-200 bg-white p-6 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-700">
+                  Worker setup incomplete
+                </p>
+                <h3 className="mt-3 text-xl font-semibold text-stone-950">
+                  Local compile is unavailable until the core Asciidoctor tools are installed.
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-stone-600">
+                  Missing tools: {missingCoreTools.join(", ")}. Install the
+                  local toolchain or point `WORKER_URL` at a configured worker,
+                  then reload this page.
+                </p>
+              </div>
+            </div>
           ) : error ? (
             <div className="flex min-h-[60vh] flex-1 items-center justify-center bg-rose-50/60 p-8 text-center">
               <div className="max-w-xl rounded-3xl border border-rose-200 bg-white p-6 shadow-sm">

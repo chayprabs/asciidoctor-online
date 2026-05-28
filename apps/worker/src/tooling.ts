@@ -36,8 +36,16 @@ function readVersion(command: string[]): string {
     .map((line) => line.trim())
     .filter(Boolean);
   const firstLine = lines[0];
+  const lowerOutput = output.toLowerCase();
 
   if ((result.status ?? 0) !== 0) {
+    if (
+      lowerOutput.includes("is not recognized as an internal or external command") ||
+      lowerOutput.includes("command not found") ||
+      lowerOutput.includes("not recognized as an internal or external command")
+    ) {
+      return "missing";
+    }
     const versionLine = lines.find((line) =>
       /\b\d+(?:\.\d+)+(?:[-+a-z0-9.]*)?\b/i.test(line),
     );
