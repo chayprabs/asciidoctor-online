@@ -6,11 +6,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ditaa \
     python3 \
     python3-pip \
-    nodejs \
-    npm \
-    chromium \
     ca-certificates \
     curl \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 RUN gem install \
@@ -29,9 +31,8 @@ COPY packages/shared-types packages/shared-types
 COPY packages/shared-worker-runtime packages/shared-worker-runtime
 COPY apps/worker apps/worker
 
-RUN curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=10.33.1 sh - \
-    && export PNPM_HOME="/root/.local/share/pnpm" \
-    && export PATH="$PNPM_HOME:$PATH" \
+RUN corepack enable \
+    && corepack prepare pnpm@10.33.1 --activate \
     && pnpm install --frozen-lockfile || pnpm install \
     && pnpm --filter @asciidoc-cloud/worker build
 
@@ -42,7 +43,6 @@ ENV ASCIIDOCTOR_REQUIRE_PATHS=asciidoctor-diagram
 ENV MERMAID_BIN=mmdc
 ENV GRAPHVIZ_BIN=dot
 ENV BLOCKDIAG_BIN=blockdiag
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PORT=8787
 ENV ARTIFACTS_DIR=/tmp/artifacts
 

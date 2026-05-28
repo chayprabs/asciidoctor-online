@@ -43,10 +43,15 @@ Open `http://localhost:3000`.
 
 ## Verification
 
+- `pnpm verify:preflight` checks Docker, Compose, Node, pnpm, and live worker
+  availability before a qualification run.
 - `pnpm verify:samples:dry-run` validates the acceptance fixture inventory and
   writes `reports/qc-appendix-b.md`.
 - `pnpm verify:samples` runs the sample compile harness against a live worker at
   `WORKER_URL` or `http://localhost:8787`.
+- `pnpm verify:runtime:dry-run` writes the Section 19 runtime report scaffold.
+- `pnpm verify:runtime` measures repeated small-doc compile latency and records
+  the p95 plus a warm-worker heuristic in `reports/section19-runtime.json`.
 
 ## License
 

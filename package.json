@@ -8,8 +8,11 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r --filter \"./packages/*\" build && pnpm -r typecheck",
     "test": "pnpm -r test",
+    "verify:preflight": "node scripts/verify-preflight.mjs",
     "verify:samples": "node scripts/verify-samples.mjs",
-    "verify:samples:dry-run": "node scripts/verify-samples.mjs --dry-run"
+    "verify:samples:dry-run": "node scripts/verify-samples.mjs --dry-run",
+    "verify:runtime": "node scripts/measure-worker.mjs",
+    "verify:runtime:dry-run": "node scripts/measure-worker.mjs --dry-run"
   },
   "engines": {
     "node": ">=22"
