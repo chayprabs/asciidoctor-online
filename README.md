@@ -1,7 +1,7 @@
 # AsciidocCloud (`asciidoctor-online`)
 
-Compile **AsciiDoc to HTML, PDF and EPUB online** with Asciidoctor, themes,
-includes, PlantUML, Mermaid, and Graphviz diagrams.
+Compile **AsciiDoc to HTML, PDF, EPUB, and DocBook online** with Asciidoctor,
+themes, includes, PlantUML, Mermaid, Graphviz, BlockDiag, and Ditaa diagrams.
 
 AsciidocCloud is a Pattern-1 server-side playground: a Next.js web UI talks to
 a sandboxed worker that runs JRuby and Asciidoctor toolchains in ephemeral
@@ -23,6 +23,19 @@ docker compose up --build
 ```
 
 Open `http://localhost:3000`.
+
+## What it supports
+
+- Multi-file AsciiDoc projects with entry-file selection.
+- HTML5, PDF, EPUB, and DocBook output plus project ZIP download.
+- Asciidoctor-PDF YAML themes, HTML CSS themes, and a built-in theme gallery.
+- Diagram engines: PlantUML, Mermaid, Graphviz, BlockDiag, and Ditaa.
+- Sandboxed local includes with opt-in remote include allowlists.
+- Warnings and missing-asset diagnostics.
+
+## Screenshot
+
+![AsciidocCloud PDF route screenshot](docs/images/asciidoc-to-pdf.png)
 
 ## Monorepo layout
 
@@ -52,6 +65,8 @@ Open `http://localhost:3000`.
 - `pnpm verify:runtime:dry-run` writes the Section 19 runtime report scaffold.
 - `pnpm verify:runtime` measures repeated small-doc compile latency and records
   the p95 plus a warm-worker heuristic in `reports/section19-runtime.json`.
+- `docker compose config` validates the local self-host topology even when the
+  Docker daemon is temporarily unavailable.
 
 ## License
 
