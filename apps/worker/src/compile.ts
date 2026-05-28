@@ -216,6 +216,26 @@ async function compileFormat(
   return { path: out, warnings, missingAssets };
 }
 
+async function collectDiagnostics(
+  root: string,
+  entry: string,
+): Promise<{ warnings: string[]; missingAssets: string[]; previewHtml?: string }> {
+  const outDir = join(root, ".diagnostics");
+  await mkdir(outDir, { recursive: true });
+  const { path, warnings, missingAssets } = await compileFormat(
+    root,
+    entry,
+    "html5",
+    outDir,
+  );
+
+  return {
+    warnings,
+    missingAssets,
+    previewHtml: await readFile(path, "utf8"),
+  };
+}
+
 export async function compileProject(
   project: AsciidocProject,
   targets: CompileFormat[],
@@ -268,6 +288,21 @@ export async function compileProject(
       missingAssets: [...missingAssets],
       previewHtml,
     };
+  } finally {
+    await cleanupJobDir(jobDir);
+  }
+}
+
+export async function validateProject(
+  project: AsciidocProject,
+  entryPath?: string,
+): Promise<Pick<CompileResult, "warnings" | "missingAssets" | "previewHtml">> {
+  const jobDir = await createJobDir();
+
+  try {
+    const preparedProject = await applyIncludePolicy(project);
+    const entry = await writeProject(jobDir, preparedProject, entryPath);
+    return collectDiagnostics(jobDir, entry);
   } finally {
     await cleanupJobDir(jobDir);
   }

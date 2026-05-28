@@ -8,7 +8,7 @@ import {
   THEME_GALLERY,
   type CompileFormat,
 } from "@asciidoc-cloud/shared-types";
-import { compileProject } from "./compile.js";
+import { compileProject, validateProject } from "./compile.js";
 import { getToolVersions } from "./tooling.js";
 
 const app = new Hono();
@@ -69,6 +69,25 @@ app.post("/v1/compile", async (c) => {
     return c.json({ jobId, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Compile failed";
+    return c.json({ error: message }, 500);
+  }
+});
+
+app.post("/v1/validate", async (c) => {
+  const body = await c.req.json();
+  const parsed = compileSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  try {
+    const result = await validateProject(
+      parsed.data.project,
+      parsed.data.entryPath,
+    );
+    return c.json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Validation failed";
     return c.json({ error: message }, 500);
   }
 });

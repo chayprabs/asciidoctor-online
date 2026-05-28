@@ -36,6 +36,7 @@ Open `http://localhost:3000`.
 ## API
 
 - `POST /v1/compile` project plus targets to outputs and preview HTML.
+- `POST /v1/validate` diagnostics-only validation for warnings and missing assets.
 - `GET /v1/themes` built-in YAML and CSS theme gallery.
 - `GET /v1/tooling` reported compiler and extension versions.
 - `GET /health` worker health with cached tool versions.
