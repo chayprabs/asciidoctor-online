@@ -48,6 +48,7 @@ function sectionLine(label, status, detail) {
 async function main() {
   const ci = await maybeReadJson("section19-ci.json");
   const hosted = await maybeReadJson("section19-hosted.json");
+  const hostedConfig = await maybeReadJson("section19-hosted-config.json");
   const runtime = await maybeReadJson("section19-runtime.json");
   const runtimeEvidence =
     typeof runtime?.p95Ms === "number" && typeof runtime?.warmMedianMs === "number"
@@ -56,6 +57,10 @@ async function main() {
   const lighthouse = await maybeReadJson("lighthouse-summary.json");
   const appendixB = await maybeReadText("qc-appendix-b.md");
   const dockerOk = await dockerAvailable();
+  const hostedConfigDetail =
+    hostedConfig && hostedConfig.ready === false
+      ? `Missing variables: ${hostedConfig.missingVariables.join(", ") || "none"}; missing secrets: ${hostedConfig.missingSecrets.join(", ") || "none"}.`
+      : null;
 
   const lines = [
     "# Section 19 Status",
@@ -169,7 +174,9 @@ async function main() {
       hosted?.allRoutesPassed ? "pass" : "deferred",
       hosted?.allRoutesPassed
         ? `${hosted.webUrl} ${hosted.routes.map((route) => `${route.route}=${route.status}`).join(", ")}`
-        : "Run verify:hosted with a deployed web URL.",
+        : hostedConfigDetail
+          ? `Run verify:hosted with a deployed web URL. ${hostedConfigDetail}`
+          : "Run verify:hosted with a deployed web URL.",
     ),
   );
   lines.push(
@@ -178,7 +185,9 @@ async function main() {
       hosted?.hostedCompilePassed && (hosted.apiHealthPassed ?? true) ? "pass" : "deferred",
       hosted?.hostedCompilePassed
         ? `${hosted.compile.url} status=${hosted.compile.status}${hosted.apiHealth ? ` api=${hosted.apiHealth.url} status=${hosted.apiHealth.status}` : ""}`
-        : "Hosted deployment not yet verified in current evidence.",
+        : hostedConfigDetail
+          ? `Hosted deployment not yet verified in current evidence. ${hostedConfigDetail}`
+          : "Hosted deployment not yet verified in current evidence.",
     ),
   );
   lines.push(

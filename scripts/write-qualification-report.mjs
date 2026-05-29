@@ -5,6 +5,7 @@ const ROOT = process.cwd();
 const REPORTS_DIR = join(ROOT, "reports");
 const STATUS_PATH = join(REPORTS_DIR, "section19-status.md");
 const OUTPUT = join(REPORTS_DIR, "section19-report.md");
+const HOSTED_CONFIG_PATH = join(REPORTS_DIR, "section19-hosted-config.json");
 
 function parseArgs(argv) {
   return {
@@ -52,9 +53,18 @@ function stripPrefix(line) {
   return line.replace(/^- \[(PASS|FAIL|VERIFY-DEFERRED)\]\s*/, "");
 }
 
+async function maybeReadHostedConfig() {
+  try {
+    return JSON.parse(await readFile(HOSTED_CONFIG_PATH, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const statusText = await readFile(STATUS_PATH, "utf8");
+  const hostedConfig = await maybeReadHostedConfig();
   const parsed = parseStatus(statusText);
   const generatedAt = new Date().toISOString();
   let sha = "unknown";
@@ -105,6 +115,15 @@ async function main() {
     for (const line of parsed.deferred) {
       lines.push(`  - ${stripPrefix(line)}`);
     }
+  }
+
+  if (hostedConfig && hostedConfig.ready === false) {
+    lines.push(
+      "",
+      "Hosted config:",
+      `  - Missing variables: ${hostedConfig.missingVariables.join(", ") || "none"}`,
+      `  - Missing secrets: ${hostedConfig.missingSecrets.join(", ") || "none"}`,
+    );
   }
 
   lines.push(
