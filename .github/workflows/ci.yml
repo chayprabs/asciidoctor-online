@@ -55,9 +55,10 @@ jobs:
           docker run -d --name asciidoctor-online-worker-ci -p 8787:8787 asciidoctor-online-worker:ci
       - name: Wait for health
         run: |
+          mkdir -p reports
           for attempt in $(seq 1 30); do
-            if curl -fsS http://localhost:8787/health >/tmp/worker-health.json; then
-              cat /tmp/worker-health.json
+            if curl -fsS http://localhost:8787/health >reports/worker-health.json; then
+              cat reports/worker-health.json
               exit 0
             fi
             sleep 2
@@ -68,6 +69,16 @@ jobs:
         run: pnpm verify:runtime
       - name: Verify acceptance samples
         run: pnpm verify:samples
+      - name: Upload qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qualification-evidence-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            reports/worker-health.json
+            reports/section19-runtime.json
+            reports/qc-appendix-b.md
       - name: Dump worker logs on failure
         if: failure()
         run: docker logs asciidoctor-online-worker-ci
